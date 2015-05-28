@@ -1,0 +1,918 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<web-app id="subsonic" version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+
+    <display-name>Subsonic Music Streamer</display-name>
+
+    <!-- Location of application context. Used by ContextLoaderListener. -->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>
+            /WEB-INF/applicationContext-service.xml
+            /WEB-INF/applicationContext-security.xml
+            /WEB-INF/applicationContext-cache.xml
+        </param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>net.sf.ehcache.constructs.web.ShutdownListener</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>subsonic</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <display-name>DWR Servlet</display-name>
+        <servlet-name>dwr-invoker</servlet-name>
+        <servlet-class>org.directwebremoting.servlet.DwrServlet</servlet-class>
+        <init-param>
+        	<param-name>activeReverseAjaxEnabled</param-name>
+        	<param-value>true</param-value>
+        </init-param>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>subsonic</servlet-name>
+        <url-pattern>*.view</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>subsonic</servlet-name>
+        <url-pattern>/podcast</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>subsonic</servlet-name>
+        <url-pattern>/play.m3u</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>subsonic</servlet-name>
+        <url-pattern>/stream/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>subsonic</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>subsonic</servlet-name>
+        <url-pattern>/hls/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>subsonic</servlet-name>
+        <url-pattern>/share/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>dwr-invoker</servlet-name>
+        <url-pattern>/dwr/*</url-pattern>
+    </servlet-mapping>
+
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <error-page>
+        <exception-type>java.lang.Throwable</exception-type>
+        <location>/error.jsp</location>
+    </error-page>
+
+    <filter>
+        <filter-name>BootstrapVerificationFilter</filter-name>
+        <filter-class>net.sourceforge.subsonic.filter.BootstrapVerificationFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>BootstrapVerificationFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>ParameterDecodingFilter</filter-name>
+        <filter-class>net.sourceforge.subsonic.filter.ParameterDecodingFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ParameterDecodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>RESTFilter</filter-name>
+        <filter-class>net.sourceforge.subsonic.filter.RESTFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>RESTFilter</filter-name>
+        <url-pattern>/rest/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>RequestEncodingFilter</filter-name>
+        <filter-class>net.sourceforge.subsonic.filter.RequestEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>RequestEncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <description>Sets HTTP headers to enable browser caching.</description>
+        <filter-name>CacheFilter</filter-name>
+        <filter-class>net.sourceforge.subsonic.filter.ResponseHeaderFilter</filter-class>
+        <init-param>
+            <param-name>Cache-Control</param-name>
+            <param-value>max-age=36000</param-value>
+        </init-param>
+    </filter>
+
+    <filter>
+        <description>Sets HTTP headers to disable browser caching.</description>
+        <filter-name>NoCacheFilter</filter-name>
+        <filter-class>net.sourceforge.subsonic.filter.ResponseHeaderFilter</filter-class>
+        <init-param>
+            <param-name>Cache-Control</param-name>
+            <param-value>no-cache, post-check=0, pre-check=0</param-value>
+        </init-param>
+        <init-param>
+            <param-name>Pragma</param-name>
+            <param-value>no-cache</param-value>
+        </init-param>
+        <init-param>
+            <param-name>Expires</param-name>
+            <param-value>Thu, 01 Dec 1994 16:00:00 GMT</param-value>
+        </init-param>
+    </filter>
+
+    <filter>
+        <description>The "Expires" HTTP header is set to avoid overly eager browser caching of
+            pages that implements LastModified.</description>
+        <filter-name>ExpiresFilter</filter-name>
+        <filter-class>net.sourceforge.subsonic.filter.ResponseHeaderFilter</filter-class>
+        <init-param>
+            <param-name>Expires</param-name>
+            <param-value>Thu, 01 Dec 1994 16:00:00 GMT</param-value>
+        </init-param>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>/icons/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>/style/*</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/statusChart.view</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/userChart.view</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/playlist.view</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/podcastReceiver.view</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/help.view</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/top.view</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>NoCacheFilter</filter-name>
+        <url-pattern>/home.view</url-pattern>
+    </filter-mapping>
+
+    <filter-mapping>
+        <filter-name>ExpiresFilter</filter-name>
+        <url-pattern>/left.view</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>springSecurityFilterChain</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+	 
+
+<!--
+Automatically created by JspC.
+Place this fragment in the web.xml before all icon, display-name,
+description, distributable, and context-param elements.
+-->
+
+    <servlet>
+        <servlet-name>jsp.error_jsp</servlet-name>
+        <servlet-class>jsp.error_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.index_jsp</servlet-name>
+        <servlet-class>jsp.index_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.accessDenied_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.accessDenied_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.advancedSearch_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.advancedSearch_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.advancedSearchResult_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.advancedSearchResult_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.advancedSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.advancedSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.album_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.album_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.artist_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.artist_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.artistDetails_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.artistDetails_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.artistGenres_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.artistGenres_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.avatarUploadResult_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.avatarUploadResult_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.changeCoverArt_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.changeCoverArt_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.coverArt_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.coverArt_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.createShare_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.createShare_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.db_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.db_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.donate_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.donate_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.editArtist_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.editArtist_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.editTags_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.editTags_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.externalPlayer_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.externalPlayer_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fileTree_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fileTree_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.generalSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.generalSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.genres_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.genres_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.gettingStarted_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.gettingStarted_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.groupSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.groupSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.help_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.help_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.helpToolTip_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.helpToolTip_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.home_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.home_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.index_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.index_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.internetRadioSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.internetRadioSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.lastFmSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.lastFmSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.left_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.left_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.loadPlaylist_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.loadPlaylist_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.login_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.login_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.lyrics_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.lyrics_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.main_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.main_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.mediaFolderSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.mediaFolderSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.missingAlbums_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.missingAlbums_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.missingAlbumsSearch_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.missingAlbumsSearch_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.more_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.more_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.musicCabinetSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.musicCabinetSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.musicCabinetUnavailable_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.musicCabinetUnavailable_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.networkSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.networkSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.passwordSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.passwordSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.personalSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.personalSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.playAddDownload_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.playAddDownload_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.playerSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.playerSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.playlist_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.playlist_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.podcast_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.podcast_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.podcastReceiver_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.podcastReceiver_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.podcastSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.podcastSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.radio_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.radio_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.radioSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.radioSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.related_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.related_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.reload_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.reload_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.rest.videoPlayer_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.rest.videoPlayer_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.right_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.right_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.savePlaylist_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.savePlaylist_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.search_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.search_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.searchSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.searchSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.settingsHeader_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.settingsHeader_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.shareSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.shareSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.status_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.status_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.tagSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.tagSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.top_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.top_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.transcodingSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.transcodingSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.upload_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.upload_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.userSettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.userSettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.videoPlayer_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.videoPlayer_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.xspfPlaylist_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.xspfPlaylist_jsp</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>jsp.error_jsp</servlet-name>
+        <url-pattern>/error.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.index_jsp</servlet-name>
+        <url-pattern>/index.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.accessDenied_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/accessDenied.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.advancedSearch_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/advancedSearch.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.advancedSearchResult_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/advancedSearchResult.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.advancedSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/advancedSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.album_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/album.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.artist_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/artist.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.artistDetails_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/artistDetails.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.artistGenres_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/artistGenres.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.avatarUploadResult_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/avatarUploadResult.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.changeCoverArt_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/changeCoverArt.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.coverArt_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/coverArt.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.createShare_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/createShare.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.db_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/db.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.donate_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/donate.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.editArtist_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/editArtist.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.editTags_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/editTags.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.externalPlayer_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/externalPlayer.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fileTree_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fileTree.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.generalSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/generalSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.genres_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/genres.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.gettingStarted_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/gettingStarted.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.groupSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/groupSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.help_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/help.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.helpToolTip_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/helpToolTip.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.home_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/home.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.index_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/index.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.internetRadioSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/internetRadioSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.lastFmSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/lastFmSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.left_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/left.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.loadPlaylist_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/loadPlaylist.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.login_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/login.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.lyrics_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/lyrics.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.main_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/main.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.mediaFolderSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/mediaFolderSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.missingAlbums_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/missingAlbums.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.missingAlbumsSearch_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/missingAlbumsSearch.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.more_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/more.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.musicCabinetSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/musicCabinetSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.musicCabinetUnavailable_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/musicCabinetUnavailable.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.networkSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/networkSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.passwordSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/passwordSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.personalSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/personalSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.playAddDownload_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/playAddDownload.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.playerSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/playerSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.playlist_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/playlist.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.podcast_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/podcast.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.podcastReceiver_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/podcastReceiver.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.podcastSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/podcastSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.radio_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/radio.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.radioSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/radioSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.related_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/related.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.reload_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/reload.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.rest.videoPlayer_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/rest/videoPlayer.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.right_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/right.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.savePlaylist_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/savePlaylist.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.search_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/search.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.searchSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/searchSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.settingsHeader_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/settingsHeader.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.shareSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/shareSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.status_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/status.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.tagSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/tagSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.top_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/top.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.transcodingSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/transcodingSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.upload_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/upload.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.userSettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/userSettings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.videoPlayer_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/videoPlayer.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.xspfPlaylist_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/xspfPlaylist.jsp</url-pattern>
+    </servlet-mapping>
+
+<!--
+All session-config, mime-mapping, welcome-file-list, error-page, taglib,
+resource-ref, security-constraint, login-config, security-role,
+env-entry, and ejb-ref elements should follow this fragment.
+-->
+</web-app>
